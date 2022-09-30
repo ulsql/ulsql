@@ -1,0 +1,40 @@
+parameters:
+  - name: packages
+    type: object
+    default:
+      - name: name
+        default: ""  
+      - name: download_location
+        default: ""
+      - name: unpack_location
+        default: ""    
+      - name: url
+        default: ""
+      - name: archive
+        default: "zip"
+      - name: addToPath
+        default: ""     
+      - name: clean
+        type: boolean
+        default: true
+
+steps:
+- ${{ each package in parameters.packages }}:
+  - bash: |    
+      curl -Lk -o ${{package.download_location}} \
+            ${{package.url}}
+
+      if [[ ! -z "${{package.unpack_location}}" ]]; then
+        echo Unzipping to ${{package.unpack_location}}
+        unzip -qq -d ${{package.unpack_location}} ${{package.download_location}}
+        chmod -R u+x ${{package.unpack_location}}
+        rm -rf ${{package.download_location}}
+      else
+        chmod -R u+x ${{package.download_location}}  
+      fi
+
+      if [[ ! -z "${{package.addToPath}}" ]]; then
+        echo "Add package to path"
+        echo "##vso[task.prependpath]${{package.addToPath}}"
+      fi
+    displayName: 'Unzip ${{package.name}}'
